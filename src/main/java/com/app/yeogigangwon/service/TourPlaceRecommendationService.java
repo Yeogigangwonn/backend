@@ -36,26 +36,26 @@ public class TourPlaceRecommendationService {
 
     /**
      * 종합적인 관광지 추천
-     * 
+     *
      * @param request 추천 요청 정보
      * @return 추천된 관광지 목록 (점수순 정렬)
      */
     public List<TourPlaceRecommendation> getRecommendations(RecommendationRequest request) {
-        log.info("관광지 추천 시작 - 위치: ({}, {}), 선호테마: {}", 
+        log.info("관광지 추천 시작 - 위치: ({}, {}), 선호테마: {}",
                 request.getLatitude(), request.getLongitude(), request.getPreferredThemes());
 
         try {
             // 1. 기본 조건으로 관광지 필터링
             List<TourPlace> candidatePlaces = getCandidatePlaces(request);
-            
+
             if (candidatePlaces.isEmpty()) {
                 log.warn("추천 가능한 관광지가 없습니다");
                 return Collections.emptyList();
             }
 
             // 2. 날씨 정보 조회 (한 번만 조회)
-            final WeatherSummary weatherSummary = request.isConsiderWeather() ? 
-                getWeatherSummarySafely(request.getLatitude(), request.getLongitude()) : null;
+            final WeatherSummary weatherSummary = request.isConsiderWeather() ?
+                    getWeatherSummarySafely(request.getLatitude(), request.getLongitude()) : null;
 
             // 3. 각 관광지에 대해 점수 계산 (이동 시간 포함)
             List<TourPlaceRecommendation> recommendations = candidatePlaces.stream()
@@ -86,7 +86,7 @@ public class TourPlaceRecommendationService {
      */
     private List<TourPlace> getCandidatePlaces(RecommendationRequest request) {
         List<TourPlace> allPlaces = tourPlaceRepository.findAll();
-        
+
         return allPlaces.stream()
                 .filter(place -> place.getLatitude() != null && place.getLongitude() != null)
                 .filter(place -> {
@@ -105,7 +105,7 @@ public class TourPlaceRecommendationService {
      */
     private TourPlaceRecommendation calculateRecommendationScoreWithTravelTime(
             TourPlace place, RecommendationRequest request, WeatherSummary weatherSummary) {
-        
+
         try {
             // 거리 점수 계산
             double distance = DistanceCalculator.calculateDistance(
@@ -131,16 +131,16 @@ public class TourPlaceRecommendationService {
             double totalScore;
             if (request.isConsiderTravelTime()) {
                 totalScore = (distanceScore * DISTANCE_WEIGHT) +
-                            (congestionScore * CONGESTION_WEIGHT) +
-                            (weatherScore * WEATHER_WEIGHT) +
-                            (themeScore * THEME_WEIGHT) +
-                            (travelTimeScore * TRAVEL_TIME_WEIGHT);
+                        (congestionScore * CONGESTION_WEIGHT) +
+                        (weatherScore * WEATHER_WEIGHT) +
+                        (themeScore * THEME_WEIGHT) +
+                        (travelTimeScore * TRAVEL_TIME_WEIGHT);
             } else {
                 // 이동 시간 고려하지 않을 때는 기존 가중치 사용
                 totalScore = (distanceScore * 0.3) +
-                            (congestionScore * 0.25) +
-                            (weatherScore * 0.25) +
-                            (themeScore * 0.2);
+                        (congestionScore * 0.25) +
+                        (weatherScore * 0.25) +
+                        (themeScore * 0.2);
             }
 
             // 추천 이유 생성
@@ -150,8 +150,8 @@ public class TourPlaceRecommendationService {
             return new TourPlaceRecommendation(
                     place, distance, totalScore,
                     distanceScore, congestionScore, weatherScore, themeScore, travelTimeScore, reason,
-                    request.getTransportationMode() == RecommendationRequest.TransportationMode.CAR ? 
-                        travelTimeInfo.getDrivingTime() : travelTimeInfo.getWalkingTime(), 
+                    request.getTransportationMode() == RecommendationRequest.TransportationMode.CAR ?
+                            travelTimeInfo.getDrivingTime() : travelTimeInfo.getWalkingTime(),
                     request.getTransportationMode().getDescription(),
                     distance / 1000.0 // km로 변환
             );
@@ -168,7 +168,7 @@ public class TourPlaceRecommendationService {
      */
     private double calculateDistanceScore(double distanceInMeters) {
         double distanceInKm = distanceInMeters / 1000.0;
-        
+
         if (distanceInKm <= 5) return 100;
         else if (distanceInKm <= 10) return 80;
         else if (distanceInKm <= 20) return 60;
@@ -184,11 +184,11 @@ public class TourPlaceRecommendationService {
         try {
             // 1. KTO 혼잡도 데이터 조회 (강원도 주요 관광지만 커버)
             Optional<Double> ktoRate = ktoService.getRateByPlaceName(place.getName(), LocalDate.now());
-            
+
             if (ktoRate.isPresent()) {
                 double congestionRate = ktoRate.get();
                 log.debug("KTO 혼잡도 데이터 사용 - {}: {}%", place.getName(), congestionRate);
-                
+
                 // 혼잡도율을 점수로 변환 (낮을수록 높은 점수)
                 if (congestionRate <= 30) return 100;      // 여유
                 else if (congestionRate <= 60) return 80;  // 보통
@@ -218,7 +218,7 @@ public class TourPlaceRecommendationService {
         }
 
         String categoryLower = category.toLowerCase();
-        
+
         // 카테고리별 일반적인 혼잡도 패턴 적용
         if (categoryLower.contains("해변") || categoryLower.contains("해수욕장")) {
             // 해변은 성수기(7-8월)에 매우 혼잡하지만, 현재는 중간 정도로 추정
@@ -376,9 +376,9 @@ public class TourPlaceRecommendationService {
     /**
      * 이동 시간을 고려한 추천 이유 생성
      */
-    private String generateRecommendationReasonWithTravelTime(double distanceScore, double congestionScore, 
-                                                            double weatherScore, double themeScore, 
-                                                            double travelTimeScore, RecommendationRequest request) {
+    private String generateRecommendationReasonWithTravelTime(double distanceScore, double congestionScore,
+                                                              double weatherScore, double themeScore,
+                                                              double travelTimeScore, RecommendationRequest request) {
         List<String> reasons = new ArrayList<>();
 
         if (distanceScore >= 80) reasons.add("가까운 거리");
@@ -388,7 +388,7 @@ public class TourPlaceRecommendationService {
         else if (weatherScore >= 60) reasons.add("괜찮은 날씨");
         if (themeScore >= 80) reasons.add("선호 테마");
         else if (themeScore >= 60) reasons.add("적합한 테마");
-        
+
         if (request.isConsiderTravelTime()) {
             if (travelTimeScore >= 80) reasons.add("빠른 이동");
             else if (travelTimeScore >= 60) reasons.add("적당한 이동시간");
@@ -404,8 +404,8 @@ public class TourPlaceRecommendationService {
     /**
      * 추천 이유 생성 (기존 메서드 - 호환성 유지)
      */
-    private String generateRecommendationReason(double distanceScore, double congestionScore, 
-                                              double weatherScore, double themeScore) {
+    private String generateRecommendationReason(double distanceScore, double congestionScore,
+                                                double weatherScore, double themeScore) {
         List<String> reasons = new ArrayList<>();
 
         if (distanceScore >= 80) reasons.add("가까운 거리");
