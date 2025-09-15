@@ -27,6 +27,14 @@ public class TourPlaceRecommendationService {
     private final KtoService ktoService;
     private final KakaoMapApiClient kakaoMapApiClient;
 
+    /**
+     * WeatherService 인스턴스를 반환하는 메서드
+     * 컨트롤러에서 날씨 정보에 접근할 수 있도록 함
+     */
+    public WeatherService getWeatherService() {
+        return weatherService;
+    }
+
     // 가중치 설정 (이동 시간 고려 시)
     private static final double DISTANCE_WEIGHT = 0.25;
     private static final double CONGESTION_WEIGHT = 0.2;
@@ -433,12 +441,5 @@ public class TourPlaceRecommendationService {
             log.warn("날씨 정보 조회 실패, 날씨 점수는 기본값으로 처리: {}", e.getMessage());
             return null;
         }
-    }
-
-    /**
-     * WeatherService 접근을 위한 메서드 (컨트롤러에서 사용)
-     */
-    public WeatherService getWeatherService() {
-        return weatherService;
     }
 }
