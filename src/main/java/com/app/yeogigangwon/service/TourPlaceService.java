@@ -64,7 +64,6 @@ public class TourPlaceService {
                         // 이동시간 정보 조회 (거리 계산 포함)
                         TravelTimeInfo travelTime = kakaoMapApiClient.getTravelTime(
                             userLat, userLon, place.getLatitude(), place.getLongitude()
-
                         );
                         
                         // 이동시간 정보가 있으면 사용, 없으면 거리 기반 추정
@@ -153,12 +152,9 @@ public class TourPlaceService {
         }
 
         // 카카오맵 API로 이동 시간 조회
-        log.info("TourPlaceService에서 kakaoMapApiClient.getTravelTime 호출 시작");
         TravelTimeInfo travelTime = kakaoMapApiClient.getTravelTime(
                 place1.getLatitude(), place1.getLongitude(), place2.getLatitude(), place2.getLongitude()
         );
-
-        log.info("TourPlaceService에서 kakaoMapApiClient.getTravelTime 호출 완료");
 
         // 출발지와 도착지 이름 설정
         travelTime.setOriginName(place1.getName());
