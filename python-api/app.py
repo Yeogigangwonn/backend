@@ -1,5 +1,6 @@
 # backend/python-api/app.py
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from ultralytics import YOLO
 import cv2
 import base64
@@ -14,6 +15,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Flask 애플리케이션 생성
 app = Flask(__name__)
+CORS(app)  # CORS 설정 추가
 
 # YOLOv8 model loading
 try:
@@ -24,6 +26,12 @@ try:
 except Exception as e:
     logging.error(f"Error loading YOLOv8 model: {e}")
     model = None
+
+# Health check 엔드포인트
+@app.route('/')
+@app.route('/health')
+def health_check():
+    return jsonify({"status": "UP", "service": "Python API", "model_loaded": model is not None})
 
 # 인원 수 분석 API 엔드포인트
 @app.route('/analyze_crowd', methods=['POST'])
