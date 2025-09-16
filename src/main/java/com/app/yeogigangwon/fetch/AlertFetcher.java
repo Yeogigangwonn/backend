@@ -38,27 +38,21 @@ public class AlertFetcher {
      * @return 기상 특보 목록 (API 실패 시 빈 목록 반환)
      */
     public List<WeatherAlert> fetchWeatherAlerts(String regionName) {
-        log.info("기상 특보 조회 시작 - 지역: {}", regionName);
-        
         try {
             // API URL 구성
             String url = buildApiUrl(regionName);
-            log.debug("API URL: {}", url.replace(apiKey, "***"));
             
             // API 호출 (JSON 문자열로 받기)
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
             
             // HTTP 상태 코드 확인
             if (response.getStatusCode().is2xxSuccessful()) {
-                log.info("기상 특보 API 호출 성공 - 상태코드: {}", response.getStatusCode());
                 String responseBody = response.getBody();
-                log.debug("API 응답: {}", responseBody);
                 
                 // 응답 파싱
                 return parseWeatherAlertsResponse(responseBody);
             } else {
-                log.error("기상 특보 API 호출 실패 - 상태코드: {}, 응답: {}", 
-                         response.getStatusCode(), response.getBody());
+                log.error("기상 특보 API 호출 실패 - 상태코드: {}", response.getStatusCode());
                 return new ArrayList<>(); // 빈 목록 반환
             }
             
@@ -114,7 +108,6 @@ public class AlertFetcher {
                 result.add(alert);
             }
 
-            log.info("기상 특보 {}건 조회 완료", result.size());
 
         } catch (Exception e) {
             log.error("기상 특보 응답 파싱 실패", e);

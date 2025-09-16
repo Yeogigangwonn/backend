@@ -34,4 +34,10 @@ public class TourPlace {
     private String category;    // 관광지 카테고리 (해변, 산, 문화재 등)
     
     private Integer crowdLevel; // 혼잡도 (1-5, 1:여유, 5:매우혼잡)
+    
+    @Column(length = 1000)
+    private String imageUrl;     // 대표 이미지 URL
+    
+    @Column(length = 2000)
+    private String photoUrls;    // 관련 사진 URL들 (JSON 형태로 저장)
 }
