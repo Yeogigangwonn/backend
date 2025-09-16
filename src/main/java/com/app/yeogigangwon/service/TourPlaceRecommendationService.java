@@ -401,27 +401,6 @@ public class TourPlaceRecommendationService {
         return String.join(", ", reasons) + "로 추천";
     }
 
-    /**
-     * 추천 이유 생성 (기존 메서드 - 호환성 유지)
-     */
-    private String generateRecommendationReason(double distanceScore, double congestionScore,
-                                                double weatherScore, double themeScore) {
-        List<String> reasons = new ArrayList<>();
-
-        if (distanceScore >= 80) reasons.add("가까운 거리");
-        if (congestionScore >= 80) reasons.add("여유로운 분위기");
-        else if (congestionScore >= 60) reasons.add("적당한 분위기");
-        if (weatherScore >= 80) reasons.add("좋은 날씨");
-        else if (weatherScore >= 60) reasons.add("괜찮은 날씨");
-        if (themeScore >= 80) reasons.add("선호 테마");
-        else if (themeScore >= 60) reasons.add("적합한 테마");
-
-        if (reasons.isEmpty()) {
-            return "종합적으로 추천";
-        }
-
-        return String.join(", ", reasons) + "로 추천";
-    }
 
     /**
      * 안전한 날씨 정보 조회 (예외 처리 포함)
@@ -435,10 +414,4 @@ public class TourPlaceRecommendationService {
         }
     }
 
-    /**
-     * WeatherService 접근을 위한 메서드 (컨트롤러에서 사용)
-     */
-    public WeatherService getWeatherService() {
-        return weatherService;
-    }
 }
