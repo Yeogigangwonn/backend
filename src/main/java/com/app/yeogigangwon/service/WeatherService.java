@@ -40,29 +40,24 @@ public class WeatherService {
      * @return 날씨 요약 정보
      */
     public WeatherSummary getWeatherSummary(double lat, double lon) {
-        log.info("날씨 요약 조회 - 위도: {}, 경도: {}", lat, lon);
-        
         try {
             // 1. 먼저 DB에서 최신 데이터 조회 (15분 이내)
             WeatherInfo cachedInfo = getLatestFromDb(lat, lon);
             
             // 2. 캐시된 데이터가 있고 15분 이내라면 사용
             if (cachedInfo != null) {
-                log.info("DB에서 최신 날씨 데이터 사용 (온도: {}도)", cachedInfo.getTemperature());
-                
                 // 기상 특보 조회 (실패 시 빈 목록 반환)
                 List<WeatherAlert> alerts = new ArrayList<>();
                 try {
                     alerts = alertFetcher.fetchWeatherAlerts("강원도");
                 } catch (Exception e) {
-                    log.warn("기상 특보 조회 실패, 빈 목록으로 처리: {}", e.getMessage());
+                    // 기상 특보 조회 실패 시 빈 목록으로 처리
                 }
                 
                 return new WeatherSummary(cachedInfo, alerts);
             }
             
             // 3. 캐시된 데이터가 없거나 오래되었다면 새로운 API 호출
-            log.info("DB에 최신 데이터가 없어 새로운 API 호출을 시도합니다");
             WeatherInfo info = forecastFetcher.fetchWeatherForecast(
                 GridConverter.convertToGrid(lat, lon).nx,
                 GridConverter.convertToGrid(lat, lon).ny
@@ -71,9 +66,8 @@ public class WeatherService {
             // 4. 새로운 데이터를 DB에 저장
             try {
                 fetchAndSave(lat, lon);
-                log.info("새로운 날씨 데이터를 DB에 저장했습니다");
             } catch (Exception e) {
-                log.warn("DB 저장 실패, 하지만 API 데이터는 사용: {}", e.getMessage());
+                // DB 저장 실패, 하지만 API 데이터는 사용
             }
             
             // 기상 특보 조회 (실패 시 빈 목록 반환)
@@ -81,34 +75,30 @@ public class WeatherService {
             try {
                 alerts = alertFetcher.fetchWeatherAlerts("강원도");
             } catch (Exception e) {
-                log.warn("기상 특보 조회 실패, 빈 목록으로 처리: {}", e.getMessage());
+                // 기상 특보 조회 실패 시 빈 목록으로 처리
             }
             
         return new WeatherSummary(info, alerts);
         } catch (Exception e) {
-            log.error("날씨 요약 조회 실패, 가장 최근 데이터 사용: {}", e.getMessage());
-            
             // NO_DATA 상황에서 가장 최근 DB 데이터 사용
             WeatherInfo latestInfo = getLatestFromDb(lat, lon);
             if (latestInfo != null) {
-                log.info("NO_DATA 상황에서 가장 최근 DB 데이터 사용 (온도: {}도)", latestInfo.getTemperature());
                 List<WeatherAlert> alerts = new ArrayList<>();
                 try {
                     alerts = alertFetcher.fetchWeatherAlerts("강원도");
                 } catch (Exception alertException) {
-                    log.warn("기상 특보 조회 실패, 빈 목록으로 처리: {}", alertException.getMessage());
+                    // 기상 특보 조회 실패 시 빈 목록으로 처리
                 }
                 return new WeatherSummary(latestInfo, alerts);
             }
             
             // DB에도 데이터가 없으면 기본값 반환
-            log.warn("DB에도 데이터가 없어 기본값 반환");
             WeatherInfo defaultInfo = new WeatherInfo(22, 20, 1, 2); // 온도 22도, 강수확률 20%, 맑음, 풍속 2m/s
             List<WeatherAlert> alerts = new ArrayList<>();
             try {
                 alerts = alertFetcher.fetchWeatherAlerts("강원도");
             } catch (Exception alertException) {
-                log.warn("기상 특보 조회 실패, 빈 목록으로 처리: {}", alertException.getMessage());
+                // 기상 특보 조회 실패 시 빈 목록으로 처리
             }
             return new WeatherSummary(defaultInfo, alerts);
         }
@@ -122,8 +112,6 @@ public class WeatherService {
      * @return 저장된 날씨 예보 정보
      */
     public WeatherForecast fetchAndSave(double lat, double lon) {
-        log.info("날씨 데이터 API 호출 및 저장 - 위도: {}, 경도: {}", lat, lon);
-        
         try {
             // 기준 시각 계산 (1시간 전 기준)
         LocalDateTime now = LocalDateTime.now().minusHours(1);
@@ -167,8 +155,6 @@ public class WeatherService {
      * @return 최신 날씨 정보 (없으면 null)
      */
     public WeatherInfo getLatestFromDb(double lat, double lon) {
-        log.info("DB에서 최신 날씨 데이터 조회 - 위도: {}, 경도: {}", lat, lon);
-        
         // 위도/경도를 격자 좌표로 변환
         GridCoordinate grid = GridConverter.convertToGrid(lat, lon);
 
@@ -176,7 +162,6 @@ public class WeatherService {
         List<WeatherForecast> forecasts = weatherForecastRepository.findLatestByGrid(String.valueOf(grid.nx), String.valueOf(grid.ny));
         
         if (forecasts.isEmpty()) {
-            log.warn("해당 좌표의 날씨 데이터가 없습니다 - nx: {}, ny: {}", grid.nx, grid.ny);
             return null;
         }
 
@@ -189,9 +174,7 @@ public class WeatherService {
         long minutesDiff = java.time.Duration.between(forecastTime, now).toMinutes();
         
         if (minutesDiff > 15) {
-            log.info("DB 데이터가 {}분 전 데이터입니다. NO_DATA 상황에서 가장 최근 데이터를 사용합니다", minutesDiff);
-        } else {
-            log.info("DB에서 {}분 전 최신 데이터 사용 (온도: {}도)", minutesDiff, forecast.getWeatherData());
+            // NO_DATA 상황에서 가장 최근 데이터를 사용
         }
         
         try {
@@ -290,11 +273,8 @@ public class WeatherService {
         // 심야 시간 체크 (22:00 ~ 06:00)
         int currentHour = LocalDateTime.now().getHour();
         if (currentHour >= 22 || currentHour < 6) {
-            log.info("Weather data update skipped during night hours.");
             return;
         }
-        
-        log.info("=== 강원도 전체 18개 지역 날씨 데이터 업데이트 스케줄러 시작 ===");
         
         try {
             // 강원도 전체 18개 지역의 날씨 데이터 업데이트
@@ -302,8 +282,6 @@ public class WeatherService {
                 updateWeatherForRegion(regionCode);
                 Thread.sleep(100); // API 호출 간격 조절
             }
-            
-            log.info("=== 강원도 전체 18개 지역 날씨 데이터 업데이트 완료 ===");
         } catch (Exception e) {
             log.error("강원도 전체 날씨 데이터 업데이트 중 오류 발생", e);
         }
@@ -314,14 +292,9 @@ public class WeatherService {
      */
     private void updateWeatherForRegion(String regionCode) {
         try {
-            String regionName = getRegionName(regionCode);
-            log.info("{} ({}) 날씨 데이터 업데이트 중...", regionName, regionCode);
-            
             // 지역 코드에 해당하는 대표 좌표 사용
             double[] coordinates = getRegionCoordinates(regionCode);
             fetchAndSave(coordinates[0], coordinates[1]);
-            
-            log.info("{} ({}) 날씨 데이터 업데이트 완료", regionName, regionCode);
         } catch (Exception e) {
             log.warn("지역 코드 {} 날씨 데이터 업데이트 실패: {}", regionCode, e.getMessage());
         }
