@@ -1,7 +1,4 @@
-# backend/Dockerfile
-
 # 스테이지 1: 애플리케이션 빌드
-# Gradle을 사용하여 프로젝트를 빌드합니다.
 FROM gradle:8.14.3-jdk17 AS builder
 
 # 작업 디렉토리를 설정합니다.
