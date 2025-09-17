@@ -40,4 +40,9 @@ jobs:
             docker rm backend-app || true
             docker run -d --name backend-app -p 8080:8080 \
               -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              -e KAKAO_MAP_API_KEY=${{ secrets.KAKAO_MAP_API_KEY }} \
+              -e WEATHER_API_KEY=${{ secrets.WEATHER_API_KEY }} \
+              -e TOUR_API_KEY=${{ secrets.TOUR_API_KEY }} \
+              -e KTO_API_KEY=${{ secrets.KTO_API_KEY }} \
+              -e TOUR_PHOTO_API_KEY=${{ secrets.TOUR_PHOTO_API_KEY }} \
               ${{ secrets.DOCKER_HUB_USERNAME }}/yeogigangwon-backend:latest
