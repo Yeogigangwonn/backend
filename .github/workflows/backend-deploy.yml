@@ -23,7 +23,6 @@ jobs:
 
       - name: Build backend image
         run: |
-          cd backend
           docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/yeogigangwon-backend:latest .
 
       - name: Push backend image
